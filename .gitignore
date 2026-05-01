@@ -1,0 +1,75 @@
+# Local agent/editor context
+.codex/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+.vercel/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local app data and temporary results
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+data/
+volumes/
+tmp/
+temp/
+*.tmp
+*.temp
+result-spill/
+
+# Logs
+logs/
+*.log
+
+# Docker/local overrides
+docker-compose.override.yml
+*.local.yml
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
