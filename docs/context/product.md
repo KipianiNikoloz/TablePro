@@ -40,4 +40,4 @@ TablePro is a browser-based database manager inspired by TablePlus, packaged as 
 
 Prefer a focused database workstation over a generic admin portal. V1 should feel dense, quiet, fast, and reliable. Avoid landing-page thinking inside the app: the first screen should help the user connect, browse, query, and act.
 
-Frontend visual implementation borrows its visual rulebook from `static/helixdb_design_deck.pdf`, but product naming remains TablePro unless a future OpenSpec change explicitly approves a rename.
+Frontend visual implementation borrows its visual rulebook from `static/tablepro_design_deck.pdf`, but product naming remains TablePro unless a future OpenSpec change explicitly approves a rename.

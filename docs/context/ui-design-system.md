@@ -2,7 +2,7 @@
 
 ## Deck Contract
 
-`static/helixdb_design_deck.pdf` is the visual source of truth for TablePro frontends. Use it for visual identity, dark-mode atmosphere, density, layout rhythm, component behavior, and quality gates.
+`static/tablepro_design_deck.pdf` is the visual source of truth for TablePro frontends. Use it for visual identity, dark-mode atmosphere, density, layout rhythm, component behavior, and quality gates.
 
 The deck is not a product-scope source of truth. Future or invented features shown in the deck, including schema diff, SSH settings, explain-plan depth, advanced settings, or any other unapproved workflow, are visual examples only until a feature-specific OpenSpec change approves them.
 
@@ -153,7 +153,7 @@ Use shadcn source components where available, while preserving the compact deck 
 For frontend/UI work:
 
 - Read this file before implementation.
-- Compare relevant surfaces with `static/helixdb_design_deck.pdf`.
+- Compare relevant surfaces with `static/tablepro_design_deck.pdf`.
 - Capture desktop and mobile browser screenshots for UI changes.
 - Check text fit, overlap, focus visibility, keyboard access, accessible titles, and contrast.
 - Verify deck fidelity for palette, density, typography, shell composition, data-grid rhythm, and native-tool feel.

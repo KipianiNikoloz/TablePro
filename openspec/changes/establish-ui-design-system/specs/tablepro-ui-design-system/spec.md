@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Deck reference usage
-TablePro frontend work SHALL treat `static/helixdb_design_deck.pdf` as the authoritative visual reference for identity, density, layout rhythm, component behavior, and UI quality gates.
+TablePro frontend work SHALL treat `static/tablepro_design_deck.pdf` as the authoritative visual reference for identity, density, layout rhythm, component behavior, and UI quality gates.
 
 #### Scenario: Deck is visual-authoritative
 - **WHEN** a contributor implements or reviews frontend UI
-- **THEN** they use `static/helixdb_design_deck.pdf` and `docs/context/ui-design-system.md` as visual design references
+- **THEN** they use `static/tablepro_design_deck.pdf` and `docs/context/ui-design-system.md` as visual design references
 
 #### Scenario: Deck is not feature-authoritative
 - **WHEN** the deck depicts features that are not approved by OpenSpec, including schema diff, SSH settings, explain-plan depth, or advanced settings
@@ -127,5 +127,5 @@ TablePro UI work SHALL pass accessibility, responsive-browser, and deck-fidelity
 - **THEN** desktop and mobile browser screenshots are captured to verify layout, text fit, non-overlap, density, and visual states
 
 #### Scenario: Deck fidelity is checked
-- **WHEN** a UI surface maps to a relevant screen or pattern in `static/helixdb_design_deck.pdf`
+- **WHEN** a UI surface maps to a relevant screen or pattern in `static/tablepro_design_deck.pdf`
 - **THEN** the implementation is compared against that deck reference for palette, typography, density, component rhythm, and overall native-tool feel

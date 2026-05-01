@@ -1,7 +1,7 @@
 ## 1. OpenSpec UI Design System
 
 - [x] 1.1 Create `tablepro-ui-design-system` spec requirements for deck reference usage, dark-mode identity, layout metrics, typography and color tokens, data grid behavior, workspace composition, safety treatment, editor treatment, shadcn rules, and UI validation gates.
-- [x] 1.2 Create the design document explaining how `static/helixdb_design_deck.pdf` maps into implementable frontend context.
+- [x] 1.2 Create the design document explaining how `static/tablepro_design_deck.pdf` maps into implementable frontend context.
 
 ## 2. Context Documentation
 

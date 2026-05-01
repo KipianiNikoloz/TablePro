@@ -2,11 +2,11 @@
 
 TablePro needs a strict UI rulebook before frontend implementation begins, so the browser app can feel like a dense, native-quality database cockpit instead of drifting into a generic SaaS admin interface.
 
-This change makes `static/helixdb_design_deck.pdf` the authoritative visual reference for TablePro frontend identity, density, layout rhythm, component behavior, and UI quality gates while keeping OpenSpec product scope as the source of feature requirements.
+This change makes `static/tablepro_design_deck.pdf` the authoritative visual reference for TablePro frontend identity, density, layout rhythm, component behavior, and UI quality gates while keeping OpenSpec product scope as the source of feature requirements.
 
 ## What Changes
 
-- Establish `static/helixdb_design_deck.pdf` as the visual/design reference for TablePro frontend work.
+- Establish `static/tablepro_design_deck.pdf` as the visual/design reference for TablePro frontend work.
 - Add a new `tablepro-ui-design-system` capability with testable frontend visual, composition, density, accessibility, and browser-fidelity requirements.
 - Add `docs/context/ui-design-system.md` as the canonical visual rulebook for implementation agents.
 - Clarify that HelixDB branding in the deck translates to TablePro unless a future rename is explicitly approved.

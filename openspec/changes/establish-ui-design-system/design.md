@@ -2,13 +2,13 @@
 
 TablePro currently has product and architecture context, but no frontend implementation. Before UI code begins, the project needs a durable visual rulebook that agents can apply consistently across app shell, grids, editors, dialogs, safety states, and future shadcn composition.
 
-The local file `static/helixdb_design_deck.pdf` contains the desired frontend visual language. It uses HelixDB naming and includes some future-facing database-product screens. This change treats the deck as a visual source of truth only. Product scope, feature authorization, and implementation sequence remain governed by OpenSpec capabilities and `docs/context/` domain shards.
+The local file `static/tablepro_design_deck.pdf` contains the desired frontend visual language. It uses HelixDB naming and includes some future-facing database-product screens. This change treats the deck as a visual source of truth only. Product scope, feature authorization, and implementation sequence remain governed by OpenSpec capabilities and `docs/context/` domain shards.
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Make `static/helixdb_design_deck.pdf` the authoritative visual reference for frontend identity, density, layout rhythm, and UI quality.
+- Make `static/tablepro_design_deck.pdf` the authoritative visual reference for frontend identity, density, layout rhythm, and UI quality.
 - Translate deck branding from HelixDB to TablePro unless a future rename is explicitly approved.
 - Capture a compact dark design system with concrete palette, typography, layout metrics, motion rules, composition rules, and anti-generic constraints.
 - Define shadcn-compatible implementation expectations without requiring shadcn to be initialized in this docs-only change.
@@ -25,7 +25,7 @@ The local file `static/helixdb_design_deck.pdf` contains the desired frontend vi
 
 ### Decision: Use the deck as visual authority only
 
-The UI design system will reference `static/helixdb_design_deck.pdf` as the visual source of truth for dark-mode identity, density, layout rhythm, native-tool feel, and component treatment.
+The UI design system will reference `static/tablepro_design_deck.pdf` as the visual source of truth for dark-mode identity, density, layout rhythm, native-tool feel, and component treatment.
 
 Alternatives considered:
 
