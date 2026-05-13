@@ -12,6 +12,10 @@ def test_settings_defaults_sqlite_path_under_data_dir() -> None:
     assert settings.environment == "local"
     assert settings.sqlite_path == Path("local-data") / "tablepro.sqlite3"
     assert settings.sqlite_url.endswith("local-data/tablepro.sqlite3")
+    assert settings.auth_cookie_name == "tablepro_session"
+    assert settings.auth_session_idle_timeout_seconds == 30 * 60
+    assert settings.vault_passphrase_min_length == 12
+    assert settings.vault_kdf_iterations == 1_200_000
 
 
 def test_settings_accepts_explicit_sqlite_path(local_tmp_path: Path) -> None:

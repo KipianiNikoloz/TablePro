@@ -20,6 +20,24 @@ class ReadinessResponse(BaseModel):
     checks: list[ReadinessCheck]
 
 
+class PassphraseRequest(BaseModel):
+    passphrase: str = Field(min_length=1)
+
+
+class AuthStatusResponse(BaseModel):
+    initialized: bool
+    authenticated: bool
+    vault_unlocked: bool
+    setup_required: bool
+
+
+class AuthActionResponse(BaseModel):
+    initialized: bool
+    authenticated: bool
+    vault_unlocked: bool
+    setup_required: bool
+
+
 class RuntimeResponse(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
 
