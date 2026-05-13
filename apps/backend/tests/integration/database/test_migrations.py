@@ -27,7 +27,12 @@ def test_app_migrations_initialize_sqlite_database(local_tmp_path: Path) -> None
         }
 
     assert ("schema_baseline", "202605010001") in rows
-    assert {"vault_state", "auth_sessions", "secret_refs"}.issubset(tables)
+    assert {
+        "vault_state",
+        "auth_sessions",
+        "secret_refs",
+        "database_connections",
+    }.issubset(tables)
 
 
 def test_readiness_reports_unmigrated_database(local_tmp_path: Path) -> None:
@@ -37,4 +42,4 @@ def test_readiness_reports_unmigrated_database(local_tmp_path: Path) -> None:
 
     assert readiness.ready is False
     assert readiness.current_revision is None
-    assert readiness.head_revision == "202605090001"
+    assert readiness.head_revision == "202605130001"
