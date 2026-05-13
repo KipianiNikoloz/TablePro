@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     data_dir: Path = Path("data")
     sqlite_path: Path | None = None
     apply_migrations_on_startup: bool = True
+    auth_cookie_name: str = "tablepro_session"
+    auth_session_idle_timeout_seconds: int = 30 * 60
+    auth_session_cookie_secure: bool = False
+    auth_session_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
+    vault_passphrase_min_length: int = 12
+    vault_kdf_algorithm: str = "pbkdf2-sha256"
+    vault_kdf_iterations: int = 1_200_000
 
     model_config = SettingsConfigDict(
         env_prefix="TABLEPRO_",

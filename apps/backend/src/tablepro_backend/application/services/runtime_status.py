@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from tablepro_backend.api.schemas import ReadinessCheck, ReadinessResponse, RuntimeResponse
-from tablepro_backend.application.services.vault import DeferredVaultService
 from tablepro_backend.core.config import Settings
 from tablepro_backend.infrastructure.database.readiness import check_app_database
 
@@ -24,8 +23,7 @@ def build_readiness(settings: Settings) -> ReadinessResponse:
     return ReadinessResponse(status=overall, checks=checks)
 
 
-def build_runtime_info(settings: Settings) -> RuntimeResponse:
-    vault = DeferredVaultService()
+def build_runtime_info(settings: Settings, vault_status: str) -> RuntimeResponse:
     return RuntimeResponse(
         app_name=settings.app_name,
         app_version=settings.app_version,
@@ -33,10 +31,8 @@ def build_runtime_info(settings: Settings) -> RuntimeResponse:
         data_dir_configured=bool(settings.data_dir),
         sqlite_configured=bool(settings.sqlite_path),
         migrations_on_startup=settings.apply_migrations_on_startup,
-        vault_status=vault.status,
+        vault_status=vault_status,
         deferred_capabilities=[
-            "local_admin_login",
-            "vault_encryption",
             "saved_database_credentials",
             "database_connections",
         ],
