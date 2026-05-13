@@ -120,10 +120,14 @@ def _connection_error(exc: Exception) -> HTTPException:
     if isinstance(exc, ConnectionNotFoundError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     if isinstance(exc, (VaultLockedError, SecretRefNotFoundError)):
-        return HTTPException(status_code=status.HTTP_423_LOCKED, detail="Vault is locked or unavailable.")
+        return HTTPException(
+            status_code=status.HTTP_423_LOCKED, detail="Vault is locked or unavailable."
+        )
     if isinstance(exc, ConnectionValidationError):
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
-    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Connection operation failed.")
+    return HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, detail="Connection operation failed."
+    )
 
 
 @router.get("/healthz", response_model=HealthResponse)
@@ -169,7 +173,9 @@ def login(request: Request, response: Response, body: PassphraseRequest) -> Auth
     except VaultNotInitializedError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except InvalidPassphraseError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid passphrase.") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid passphrase."
+        ) from exc
     _set_session_cookie(response, _settings(request), session.token)
     return _auth_response(service.status(session.token))
 

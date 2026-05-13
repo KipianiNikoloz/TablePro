@@ -17,7 +17,9 @@ def check_app_database(settings: Settings) -> AppDatabaseReadiness:
         engine = create_engine(settings.sqlite_url)
         with engine.connect() as connection:
             current_revision = _current_revision(connection)
-        head_revision = ScriptDirectory.from_config(build_alembic_config(settings)).get_current_head()
+        head_revision = ScriptDirectory.from_config(
+            build_alembic_config(settings)
+        ).get_current_head()
     except SQLAlchemyError as exc:
         return AppDatabaseReadiness(
             ready=False,

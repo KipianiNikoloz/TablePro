@@ -36,7 +36,9 @@ class DriverConnectionTester:
                 dialect=request.dialect,
                 message="Connection test failed.",
             )
-        return ConnectionTestResult(ok=True, dialect=request.dialect, message="Connection test passed.")
+        return ConnectionTestResult(
+            ok=True, dialect=request.dialect, message="Connection test passed."
+        )
 
     def _test_mysql(self, request: ConnectionTestRequest) -> ConnectionTestResult:
         connection = None
@@ -65,4 +67,6 @@ class DriverConnectionTester:
         finally:
             if connection is not None:
                 connection.close()
-        return ConnectionTestResult(ok=True, dialect=request.dialect, message="Connection test passed.")
+        return ConnectionTestResult(
+            ok=True, dialect=request.dialect, message="Connection test passed."
+        )

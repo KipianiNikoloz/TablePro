@@ -56,25 +56,33 @@ class SQLiteConnectionRepository:
 
     def list(self) -> list[SavedConnection]:
         with self.engine.connect() as connection:
-            rows = connection.execute(
-                text(
-                    "SELECT id, name, dialect, host, port, database, username, environment_label, "
-                    "password_secret_ref, created_at, updated_at "
-                    "FROM database_connections WHERE deleted_at IS NULL ORDER BY name ASC, id ASC"
+            rows = (
+                connection.execute(
+                    text(
+                        "SELECT id, name, dialect, host, port, database, username, environment_label, "
+                        "password_secret_ref, created_at, updated_at "
+                        "FROM database_connections WHERE deleted_at IS NULL ORDER BY name ASC, id ASC"
+                    )
                 )
-            ).mappings().all()
+                .mappings()
+                .all()
+            )
         return [self._from_row(row) for row in rows]
 
     def get(self, connection_id: str) -> SavedConnection:
         with self.engine.connect() as connection:
-            row = connection.execute(
-                text(
-                    "SELECT id, name, dialect, host, port, database, username, environment_label, "
-                    "password_secret_ref, created_at, updated_at "
-                    "FROM database_connections WHERE id = :id AND deleted_at IS NULL"
-                ),
-                {"id": connection_id},
-            ).mappings().first()
+            row = (
+                connection.execute(
+                    text(
+                        "SELECT id, name, dialect, host, port, database, username, environment_label, "
+                        "password_secret_ref, created_at, updated_at "
+                        "FROM database_connections WHERE id = :id AND deleted_at IS NULL"
+                    ),
+                    {"id": connection_id},
+                )
+                .mappings()
+                .first()
+            )
         if row is None:
             raise ConnectionNotFoundError("Connection was not found.")
         return self._from_row(row)

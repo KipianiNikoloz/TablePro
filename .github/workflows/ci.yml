@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "apps/backend/**"
+      - "openspec/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+      - "apps/backend/**"
+      - "openspec/**"
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: python -m pip install uv
+
+      - name: Verify locked dependencies
+        run: uv lock --check
+
+      - name: Install backend dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Test
+        run: uv run pytest
+
+  openspec:
+    name: OpenSpec validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate active OpenSpec changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for change in openspec/changes/*; do
+            if [ -d "$change" ] && [ "$(basename "$change")" != "archive" ]; then
+              npx --yes @fission-ai/openspec validate "$(basename "$change")" --strict
+            fi
+          done

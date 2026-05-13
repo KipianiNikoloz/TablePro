@@ -66,12 +66,16 @@ class SQLiteVaultRepository:
 
     def load_vault_state(self) -> VaultStateRecord | None:
         with self.engine.connect() as connection:
-            row = connection.execute(
-                text(
-                    "SELECT kdf_algorithm, kdf_iterations, salt, verifier_ciphertext "
-                    "FROM vault_state WHERE id = 1"
+            row = (
+                connection.execute(
+                    text(
+                        "SELECT kdf_algorithm, kdf_iterations, salt, verifier_ciphertext "
+                        "FROM vault_state WHERE id = 1"
+                    )
                 )
-            ).mappings().first()
+                .mappings()
+                .first()
+            )
         if row is None:
             return None
         return VaultStateRecord(
@@ -131,18 +135,23 @@ class SQLiteVaultRepository:
         token_hash = hash_session_token(token)
         now = utc_now()
         with self.engine.begin() as connection:
-            row = connection.execute(
-                text(
-                    "SELECT expires_at, revoked_at FROM auth_sessions "
-                    "WHERE id_hash = :id_hash"
-                ),
-                {"id_hash": token_hash},
-            ).mappings().first()
+            row = (
+                connection.execute(
+                    text(
+                        "SELECT expires_at, revoked_at FROM auth_sessions WHERE id_hash = :id_hash"
+                    ),
+                    {"id_hash": token_hash},
+                )
+                .mappings()
+                .first()
+            )
             if row is None or row["revoked_at"] is not None:
                 return None
             if from_db_time(row["expires_at"]) <= now:
                 connection.execute(
-                    text("UPDATE auth_sessions SET revoked_at = :revoked_at WHERE id_hash = :id_hash"),
+                    text(
+                        "UPDATE auth_sessions SET revoked_at = :revoked_at WHERE id_hash = :id_hash"
+                    ),
                     {"revoked_at": to_db_time(now), "id_hash": token_hash},
                 )
                 return None
@@ -203,17 +212,23 @@ class SQLiteVaultRepository:
                     "updated_at": now,
                 },
             )
-        return SecretRefRecord(id=ref_id, ciphertext=ciphertext, label=label, secret_type=secret_type)
+        return SecretRefRecord(
+            id=ref_id, ciphertext=ciphertext, label=label, secret_type=secret_type
+        )
 
     def load_secret_ref(self, ref_id: str) -> SecretRefRecord:
         with self.engine.connect() as connection:
-            row = connection.execute(
-                text(
-                    "SELECT id, ciphertext, label, secret_type FROM secret_refs "
-                    "WHERE id = :id AND deleted_at IS NULL"
-                ),
-                {"id": ref_id},
-            ).mappings().first()
+            row = (
+                connection.execute(
+                    text(
+                        "SELECT id, ciphertext, label, secret_type FROM secret_refs "
+                        "WHERE id = :id AND deleted_at IS NULL"
+                    ),
+                    {"id": ref_id},
+                )
+                .mappings()
+                .first()
+            )
         if row is None:
             raise SecretRefNotFoundError("Secret reference was not found.")
         return SecretRefRecord(

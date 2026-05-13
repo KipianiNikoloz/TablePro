@@ -106,7 +106,9 @@ def test_connection_service_rejects_password_operations_when_locked(local_tmp_pa
         service.delete(saved.id)
 
 
-def test_connection_service_tests_saved_connection_with_resolved_password(local_tmp_path: Path) -> None:
+def test_connection_service_tests_saved_connection_with_resolved_password(
+    local_tmp_path: Path,
+) -> None:
     service, _, tester = _service(local_tmp_path)
     saved = service.create(_connection_input("saved-password"))
 
