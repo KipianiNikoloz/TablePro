@@ -27,7 +27,9 @@ def test_vault_stores_and_resolves_secret_refs(local_tmp_path: Path) -> None:
     service = _vault_service(local_tmp_path)
     service.initialize("correct horse battery staple")
 
-    secret_ref = service.create_secret_ref("db-password", label="main", secret_type="database-password")
+    secret_ref = service.create_secret_ref(
+        "db-password", label="main", secret_type="database-password"
+    )
 
     assert secret_ref.startswith("sec_")
     assert service.resolve_secret_ref(secret_ref) == "db-password"

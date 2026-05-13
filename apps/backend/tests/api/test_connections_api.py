@@ -134,8 +134,12 @@ def test_connection_test_uses_fake_adapter_and_redacts_password(local_tmp_path: 
     client, tester = _client(local_tmp_path)
     with client:
         assert client.post("/api/auth/setup", json={"passphrase": PASSPHRASE}).status_code == 200
-        provided_response = client.post("/api/connections/test", json=_connection_payload("db-password"))
-        create_response = client.post("/api/connections", json=_connection_payload("saved-password"))
+        provided_response = client.post(
+            "/api/connections/test", json=_connection_payload("db-password")
+        )
+        create_response = client.post(
+            "/api/connections", json=_connection_payload("saved-password")
+        )
         saved_response = client.post(f"/api/connections/{create_response.json()['id']}/test")
 
     assert provided_response.status_code == 200

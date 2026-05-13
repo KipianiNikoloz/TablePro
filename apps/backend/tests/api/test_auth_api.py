@@ -61,12 +61,16 @@ def test_setup_rejects_weak_passphrase(local_tmp_path: Path) -> None:
     assert response.status_code == 400
 
 
-def test_login_rejects_wrong_passphrase_and_accepts_correct_passphrase(local_tmp_path: Path) -> None:
+def test_login_rejects_wrong_passphrase_and_accepts_correct_passphrase(
+    local_tmp_path: Path,
+) -> None:
     with _client(local_tmp_path) as client:
         assert client.post("/api/auth/setup", json={"passphrase": PASSPHRASE}).status_code == 200
         assert client.post("/api/auth/lock").status_code == 200
 
-        wrong_response = client.post("/api/auth/login", json={"passphrase": "wrong horse battery staple"})
+        wrong_response = client.post(
+            "/api/auth/login", json={"passphrase": "wrong horse battery staple"}
+        )
         correct_response = client.post("/api/auth/login", json={"passphrase": PASSPHRASE})
 
     assert wrong_response.status_code == 401
@@ -107,7 +111,9 @@ def test_protected_auth_actions_require_valid_session(local_tmp_path: Path) -> N
     assert lock_response.status_code == 401
 
 
-def test_auth_api_responses_do_not_expose_session_token_or_secret_material(local_tmp_path: Path) -> None:
+def test_auth_api_responses_do_not_expose_session_token_or_secret_material(
+    local_tmp_path: Path,
+) -> None:
     with _client(local_tmp_path) as client:
         response = client.post("/api/auth/setup", json={"passphrase": PASSPHRASE})
         session_cookie = response.cookies.get("tablepro_session")

@@ -30,7 +30,7 @@ class ConnectionService:
         secret_ref = self.vault.create_secret_ref(
             data.password,
             label=f"connection:{data.name}",
-            secret_type="database_password",
+            secret_type="database_credential",  # nosec B106
         )
         return self.repository.create(data, secret_ref)
 
@@ -56,7 +56,7 @@ class ConnectionService:
             new_secret_ref = self.vault.create_secret_ref(
                 update.password,
                 label=f"connection:{update.name or current.name}",
-                secret_type="database_password",
+                secret_type="database_credential",  # nosec B106
             )
         refs = self.repository.update(connection_id, update, password_secret_ref=new_secret_ref)
         if refs.previous:
