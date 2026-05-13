@@ -5,12 +5,19 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from tablepro_backend.api.schemas import (
     AuthActionResponse,
     AuthStatusResponse,
+    ConnectionCreateRequest,
+    ConnectionListResponse,
+    ConnectionResponse,
+    ConnectionTestRequestBody,
+    ConnectionTestResponse,
+    ConnectionUpdateRequest,
     HealthResponse,
     PassphraseRequest,
     ReadinessResponse,
     RuntimeResponse,
 )
 from tablepro_backend.application.services.auth import AuthService, AuthStatus
+from tablepro_backend.application.services.connections import ConnectionService
 from tablepro_backend.application.services.runtime_status import (
     build_readiness,
     build_runtime_info,
@@ -18,9 +25,20 @@ from tablepro_backend.application.services.runtime_status import (
 from tablepro_backend.core.config import Settings
 from tablepro_backend.domain.auth import (
     InvalidPassphraseError,
+    SecretRefNotFoundError,
     SessionInvalidError,
+    VaultLockedError,
     VaultAlreadyInitializedError,
     VaultNotInitializedError,
+)
+from tablepro_backend.domain.connections import (
+    ConnectionInput,
+    ConnectionNotFoundError,
+    ConnectionTestRequest,
+    ConnectionTestResult,
+    ConnectionUpdate,
+    ConnectionValidationError,
+    SavedConnection,
 )
 
 router = APIRouter()
@@ -32,6 +50,10 @@ def _settings(request: Request) -> Settings:
 
 def _auth_service(request: Request) -> AuthService:
     return request.app.state.auth_service
+
+
+def _connection_service(request: Request) -> ConnectionService:
+    return request.app.state.connection_service
 
 
 def _session_cookie(request: Request) -> str | None:
@@ -65,6 +87,43 @@ def _clear_session_cookie(response: Response, settings: Settings) -> None:
         secure=settings.auth_session_cookie_secure,
         samesite=settings.auth_session_cookie_samesite,
     )
+
+
+def _require_auth(request: Request) -> None:
+    try:
+        _auth_service(request).require_session(_session_cookie(request))
+    except SessionInvalidError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+
+
+def _connection_response(connection: SavedConnection) -> ConnectionResponse:
+    return ConnectionResponse(
+        id=connection.id,
+        name=connection.name,
+        dialect=connection.dialect,
+        host=connection.host,
+        port=connection.port,
+        database=connection.database,
+        username=connection.username,
+        environment_label=connection.environment_label,
+        has_password=connection.has_password,
+        created_at=connection.created_at.isoformat(),
+        updated_at=connection.updated_at.isoformat(),
+    )
+
+
+def _test_response(result: ConnectionTestResult) -> ConnectionTestResponse:
+    return ConnectionTestResponse(ok=result.ok, dialect=result.dialect, message=result.message)
+
+
+def _connection_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, ConnectionNotFoundError):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    if isinstance(exc, (VaultLockedError, SecretRefNotFoundError)):
+        return HTTPException(status_code=status.HTTP_423_LOCKED, detail="Vault is locked or unavailable.")
+    if isinstance(exc, ConnectionValidationError):
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Connection operation failed.")
 
 
 @router.get("/healthz", response_model=HealthResponse)
@@ -135,3 +194,108 @@ def lock(request: Request, response: Response) -> AuthActionResponse:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     _clear_session_cookie(response, _settings(request))
     return _auth_response(service.status(None))
+
+
+@router.get("/api/connections", response_model=ConnectionListResponse)
+def list_connections(request: Request) -> ConnectionListResponse:
+    _require_auth(request)
+    connections = _connection_service(request).list()
+    return ConnectionListResponse(connections=[_connection_response(item) for item in connections])
+
+
+@router.post("/api/connections", response_model=ConnectionResponse)
+def create_connection(request: Request, body: ConnectionCreateRequest) -> ConnectionResponse:
+    _require_auth(request)
+    try:
+        connection = _connection_service(request).create(
+            ConnectionInput(
+                name=body.name,
+                dialect=body.dialect,
+                host=body.host,
+                port=body.port,
+                database=body.database,
+                username=body.username,
+                password=body.password,
+                environment_label=body.environment_label,
+            )
+        )
+    except Exception as exc:
+        raise _connection_error(exc) from exc
+    return _connection_response(connection)
+
+
+@router.get("/api/connections/{connection_id}", response_model=ConnectionResponse)
+def get_connection(request: Request, connection_id: str) -> ConnectionResponse:
+    _require_auth(request)
+    try:
+        connection = _connection_service(request).get(connection_id)
+    except Exception as exc:
+        raise _connection_error(exc) from exc
+    return _connection_response(connection)
+
+
+@router.patch("/api/connections/{connection_id}", response_model=ConnectionResponse)
+def update_connection(
+    request: Request,
+    connection_id: str,
+    body: ConnectionUpdateRequest,
+) -> ConnectionResponse:
+    _require_auth(request)
+    try:
+        connection = _connection_service(request).update(
+            connection_id,
+            ConnectionUpdate(
+                name=body.name,
+                host=body.host,
+                port=body.port,
+                database=body.database,
+                username=body.username,
+                password=body.password,
+                environment_label=body.environment_label,
+            ),
+        )
+    except Exception as exc:
+        raise _connection_error(exc) from exc
+    return _connection_response(connection)
+
+
+@router.delete("/api/connections/{connection_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_connection(request: Request, connection_id: str) -> Response:
+    _require_auth(request)
+    try:
+        _connection_service(request).delete(connection_id)
+    except Exception as exc:
+        raise _connection_error(exc) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/api/connections/test", response_model=ConnectionTestResponse)
+def test_provided_connection(
+    request: Request,
+    body: ConnectionTestRequestBody,
+) -> ConnectionTestResponse:
+    _require_auth(request)
+    try:
+        result = _connection_service(request).test_provided(
+            ConnectionTestRequest(
+                dialect=body.dialect,
+                host=body.host,
+                port=body.port,
+                database=body.database,
+                username=body.username,
+                password=body.password,
+            )
+        )
+    except Exception as exc:
+        raise _connection_error(exc) from exc
+    return _test_response(result)
+
+
+@router.post("/api/connections/{connection_id}/test", response_model=ConnectionTestResponse)
+def test_saved_connection(request: Request, connection_id: str) -> ConnectionTestResponse:
+    _require_auth(request)
+    try:
+        result = _connection_service(request).test_saved(connection_id)
+    except Exception as exc:
+        raise _connection_error(exc) from exc
+    return _test_response(result)
