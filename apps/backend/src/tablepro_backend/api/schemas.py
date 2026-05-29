@@ -107,3 +107,53 @@ class ConnectionTestResponse(BaseModel):
     ok: bool
     dialect: ConnectionDialect
     message: str
+
+
+class SchemaColumnResponse(BaseModel):
+    name: str
+    data_type: str
+    nullable: bool
+    ordinal_position: int
+    default: str | None = None
+
+
+class SchemaIndexResponse(BaseModel):
+    name: str
+    columns: list[str]
+    unique: bool
+
+
+class SchemaRelationshipResponse(BaseModel):
+    name: str
+    columns: list[str]
+    referenced_schema: str
+    referenced_table: str
+    referenced_columns: list[str]
+
+
+class SchemaTableResponse(BaseModel):
+    schema_name: str
+    name: str
+    columns: list[SchemaColumnResponse]
+    primary_key: list[str]
+    unique_identities: list[list[str]]
+    indexes: list[SchemaIndexResponse]
+    relationships: list[SchemaRelationshipResponse]
+
+
+class SchemaSnapshotResponse(BaseModel):
+    connection_id: str
+    dialect: ConnectionDialect
+    refreshed_at: str
+    tables: list[SchemaTableResponse]
+
+
+class SchemaCacheMissResponse(BaseModel):
+    status: str = "missing"
+    message: str
+
+
+class SchemaResponse(BaseModel):
+    status: str
+    snapshot: SchemaSnapshotResponse | None = None
+    message: str | None = None

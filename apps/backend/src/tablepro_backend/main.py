@@ -8,11 +8,14 @@ from fastapi import FastAPI
 from tablepro_backend.api.routes import router
 from tablepro_backend.application.services.auth import AuthService
 from tablepro_backend.application.services.connections import ConnectionService
+from tablepro_backend.application.services.schema import SchemaService
 from tablepro_backend.application.services.vault import VaultService
 from tablepro_backend.core.config import Settings, get_settings
 from tablepro_backend.core.logging import configure_logging
 from tablepro_backend.infrastructure.database.connections import SQLiteConnectionRepository
+from tablepro_backend.infrastructure.database.introspection import DriverSchemaIntrospector
 from tablepro_backend.infrastructure.database.migrations import apply_app_migrations
+from tablepro_backend.infrastructure.database.schema import SQLiteSchemaRepository
 from tablepro_backend.infrastructure.database.testers import DriverConnectionTester
 from tablepro_backend.infrastructure.database.vault import SQLiteVaultRepository
 
@@ -40,6 +43,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         connection_repository,
         vault_service,
         DriverConnectionTester(),
+    )
+    schema_repository = SQLiteSchemaRepository(app_settings)
+    app.state.schema_repository = schema_repository
+    app.state.schema_service = SchemaService(
+        connection_repository,
+        schema_repository,
+        vault_service,
+        DriverSchemaIntrospector(),
     )
     app.include_router(router)
     return app

@@ -33,7 +33,7 @@ def test_readyz_reports_ready_after_startup_migrations(local_tmp_path: Path) -> 
     assert body["status"] == "ready"
     assert body["checks"][0]["name"] == "app_database"
     assert body["checks"][0]["status"] == "pass"
-    assert body["checks"][0]["details"]["current_revision"] == "202605130001"
+    assert body["checks"][0]["details"]["current_revision"] == "202605130002"
 
 
 def test_readyz_reports_not_ready_without_startup_migrations(local_tmp_path: Path) -> None:
