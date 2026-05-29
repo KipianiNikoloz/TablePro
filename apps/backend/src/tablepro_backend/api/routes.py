@@ -15,6 +15,13 @@ from tablepro_backend.api.schemas import (
     PassphraseRequest,
     ReadinessResponse,
     RuntimeResponse,
+    SchemaCacheMissResponse,
+    SchemaColumnResponse,
+    SchemaIndexResponse,
+    SchemaRelationshipResponse,
+    SchemaResponse,
+    SchemaSnapshotResponse,
+    SchemaTableResponse,
 )
 from tablepro_backend.application.services.auth import AuthService, AuthStatus
 from tablepro_backend.application.services.connections import ConnectionService
@@ -22,6 +29,7 @@ from tablepro_backend.application.services.runtime_status import (
     build_readiness,
     build_runtime_info,
 )
+from tablepro_backend.application.services.schema import SchemaService
 from tablepro_backend.core.config import Settings
 from tablepro_backend.domain.auth import (
     InvalidPassphraseError,
@@ -40,6 +48,11 @@ from tablepro_backend.domain.connections import (
     ConnectionValidationError,
     SavedConnection,
 )
+from tablepro_backend.domain.schema import (
+    SchemaRefreshError,
+    SchemaSnapshot,
+    SchemaSnapshotNotFoundError,
+)
 
 router = APIRouter()
 
@@ -54,6 +67,10 @@ def _auth_service(request: Request) -> AuthService:
 
 def _connection_service(request: Request) -> ConnectionService:
     return request.app.state.connection_service
+
+
+def _schema_service(request: Request) -> SchemaService:
+    return request.app.state.schema_service
 
 
 def _session_cookie(request: Request) -> str | None:
@@ -116,6 +133,51 @@ def _test_response(result: ConnectionTestResult) -> ConnectionTestResponse:
     return ConnectionTestResponse(ok=result.ok, dialect=result.dialect, message=result.message)
 
 
+def _schema_response(snapshot: SchemaSnapshot) -> SchemaSnapshotResponse:
+    return SchemaSnapshotResponse(
+        connection_id=snapshot.connection_id,
+        dialect=snapshot.dialect,
+        refreshed_at=snapshot.refreshed_at.isoformat(),
+        tables=[
+            SchemaTableResponse(
+                schema_name=table.schema_name,
+                name=table.name,
+                columns=[
+                    SchemaColumnResponse(
+                        name=column.name,
+                        data_type=column.data_type,
+                        nullable=column.nullable,
+                        ordinal_position=column.ordinal_position,
+                        default=column.default,
+                    )
+                    for column in table.columns
+                ],
+                primary_key=table.primary_key,
+                unique_identities=table.unique_identities,
+                indexes=[
+                    SchemaIndexResponse(
+                        name=index.name,
+                        columns=index.columns,
+                        unique=index.unique,
+                    )
+                    for index in table.indexes
+                ],
+                relationships=[
+                    SchemaRelationshipResponse(
+                        name=relationship.name,
+                        columns=relationship.columns,
+                        referenced_schema=relationship.referenced_schema,
+                        referenced_table=relationship.referenced_table,
+                        referenced_columns=relationship.referenced_columns,
+                    )
+                    for relationship in table.relationships
+                ],
+            )
+            for table in snapshot.tables
+        ],
+    )
+
+
 def _connection_error(exc: Exception) -> HTTPException:
     if isinstance(exc, ConnectionNotFoundError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
@@ -128,6 +190,18 @@ def _connection_error(exc: Exception) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail="Connection operation failed."
     )
+
+
+def _schema_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, ConnectionNotFoundError):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    if isinstance(exc, VaultLockedError):
+        return HTTPException(status_code=status.HTTP_423_LOCKED, detail="Vault is locked.")
+    if isinstance(exc, SchemaRefreshError):
+        return HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="Schema refresh failed."
+        )
+    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Schema operation failed.")
 
 
 @router.get("/healthz", response_model=HealthResponse)
@@ -305,3 +379,30 @@ def test_saved_connection(request: Request, connection_id: str) -> ConnectionTes
     except Exception as exc:
         raise _connection_error(exc) from exc
     return _test_response(result)
+
+
+@router.get(
+    "/api/connections/{connection_id}/schema",
+    response_model=SchemaResponse | SchemaCacheMissResponse,
+)
+def get_connection_schema(
+    request: Request, connection_id: str
+) -> SchemaResponse | SchemaCacheMissResponse:
+    _require_auth(request)
+    try:
+        snapshot = _schema_service(request).get_cached(connection_id)
+    except SchemaSnapshotNotFoundError:
+        return SchemaCacheMissResponse(message="Schema snapshot has not been refreshed yet.")
+    except Exception as exc:
+        raise _schema_error(exc) from exc
+    return SchemaResponse(status="ready", snapshot=_schema_response(snapshot))
+
+
+@router.post("/api/connections/{connection_id}/schema/refresh", response_model=SchemaResponse)
+def refresh_connection_schema(request: Request, connection_id: str) -> SchemaResponse:
+    _require_auth(request)
+    try:
+        snapshot = _schema_service(request).refresh(connection_id)
+    except Exception as exc:
+        raise _schema_error(exc) from exc
+    return SchemaResponse(status="ready", snapshot=_schema_response(snapshot))
