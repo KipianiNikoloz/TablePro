@@ -33,7 +33,11 @@ def build_runtime_info(settings: Settings, vault_status: str) -> RuntimeResponse
         migrations_on_startup=settings.apply_migrations_on_startup,
         vault_status=vault_status,
         deferred_capabilities=[
-            "query_execution",
-            "pane_sessions",
+            "frontend_ui",
+            "websocket_events",
+            "query_history_bookmarks",
+            "inline_edits",
+            "csv_import_export",
+            "ai_drafting",
         ],
     )

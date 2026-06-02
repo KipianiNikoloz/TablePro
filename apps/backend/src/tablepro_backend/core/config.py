@@ -25,6 +25,13 @@ class Settings(BaseSettings):
     vault_passphrase_min_length: int = 12
     vault_kdf_algorithm: str = "pbkdf2-sha256"
     vault_kdf_iterations: int = 1_200_000
+    query_default_row_limit: int = 1000
+    query_default_page_size: int = 100
+    query_max_page_size: int = 500
+    query_timeout_seconds: int = 30
+    query_max_concurrent_jobs: int = 4
+    query_result_store_max_rows: int = 10_000
+    query_pane_session_idle_timeout_seconds: int = 30 * 60
 
     model_config = SettingsConfigDict(
         env_prefix="TABLEPRO_",
