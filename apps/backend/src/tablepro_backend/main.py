@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from tablepro_backend.api.routes import router
 from tablepro_backend.application.services.auth import AuthService
 from tablepro_backend.application.services.connections import ConnectionService
+from tablepro_backend.application.services.query import QueryService
 from tablepro_backend.application.services.schema import SchemaService
 from tablepro_backend.application.services.vault import VaultService
 from tablepro_backend.core.config import Settings, get_settings
@@ -15,9 +16,11 @@ from tablepro_backend.core.logging import configure_logging
 from tablepro_backend.infrastructure.database.connections import SQLiteConnectionRepository
 from tablepro_backend.infrastructure.database.introspection import DriverSchemaIntrospector
 from tablepro_backend.infrastructure.database.migrations import apply_app_migrations
+from tablepro_backend.infrastructure.database.query import DriverQueryAdapter
 from tablepro_backend.infrastructure.database.schema import SQLiteSchemaRepository
 from tablepro_backend.infrastructure.database.testers import DriverConnectionTester
 from tablepro_backend.infrastructure.database.vault import SQLiteVaultRepository
+from tablepro_backend.infrastructure.result_store import InMemoryResultStore
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -51,6 +54,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         schema_repository,
         vault_service,
         DriverSchemaIntrospector(),
+    )
+    app.state.result_store = InMemoryResultStore(
+        max_rows=app_settings.query_result_store_max_rows
+    )
+    app.state.query_service = QueryService(
+        connection_repository,
+        vault_service,
+        DriverQueryAdapter(),
+        app.state.result_store,
+        app_settings,
     )
     app.include_router(router)
     return app

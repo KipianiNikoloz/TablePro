@@ -13,6 +13,11 @@ from tablepro_backend.api.schemas import (
     ConnectionUpdateRequest,
     HealthResponse,
     PassphraseRequest,
+    QueryColumnResponse,
+    QueryErrorResponse,
+    QueryJobResponse,
+    QueryResultPageResponse,
+    QuerySubmitRequest,
     ReadinessResponse,
     RuntimeResponse,
     SchemaCacheMissResponse,
@@ -30,6 +35,7 @@ from tablepro_backend.application.services.runtime_status import (
     build_runtime_info,
 )
 from tablepro_backend.application.services.schema import SchemaService
+from tablepro_backend.application.services.query import QueryService
 from tablepro_backend.core.config import Settings
 from tablepro_backend.domain.auth import (
     InvalidPassphraseError,
@@ -53,6 +59,14 @@ from tablepro_backend.domain.schema import (
     SchemaSnapshot,
     SchemaSnapshotNotFoundError,
 )
+from tablepro_backend.domain.query import (
+    QueryJob,
+    QueryJobNotFoundError,
+    QueryResultNotFoundError,
+    QueryResultPage,
+    QuerySubmit,
+    QueryValidationError,
+)
 
 router = APIRouter()
 
@@ -71,6 +85,10 @@ def _connection_service(request: Request) -> ConnectionService:
 
 def _schema_service(request: Request) -> SchemaService:
     return request.app.state.schema_service
+
+
+def _query_service(request: Request) -> QueryService:
+    return request.app.state.query_service
 
 
 def _session_cookie(request: Request) -> str | None:
@@ -178,6 +196,50 @@ def _schema_response(snapshot: SchemaSnapshot) -> SchemaSnapshotResponse:
     )
 
 
+def _query_job_response(job: QueryJob) -> QueryJobResponse:
+    return QueryJobResponse(
+        id=job.id,
+        connection_id=job.connection_id,
+        pane_id=job.pane_id,
+        status=job.status,
+        submitted_at=job.submitted_at.isoformat(),
+        started_at=job.started_at.isoformat() if job.started_at else None,
+        completed_at=job.completed_at.isoformat() if job.completed_at else None,
+        duration_ms=job.duration_ms,
+        row_count=job.row_count,
+        rows_affected=job.rows_affected,
+        has_result=job.result_handle is not None,
+        page_size=job.page_size,
+        total_rows=job.total_rows,
+        limit_reached=job.limit_reached,
+        transaction_state=job.transaction_state,
+        error=(
+            QueryErrorResponse(
+                code=job.error.code,
+                message=job.error.message,
+                category=job.error.category,
+            )
+            if job.error
+            else None
+        ),
+    )
+
+
+def _query_page_response(page: QueryResultPage) -> QueryResultPageResponse:
+    return QueryResultPageResponse(
+        job_id=page.job_id,
+        page_index=page.page_index,
+        page_size=page.page_size,
+        total_rows=page.total_rows,
+        columns=[
+            QueryColumnResponse(name=column.name, data_type=column.data_type)
+            for column in page.columns
+        ],
+        rows=page.rows,
+        limit_reached=page.limit_reached,
+    )
+
+
 def _connection_error(exc: Exception) -> HTTPException:
     if isinstance(exc, ConnectionNotFoundError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
@@ -202,6 +264,18 @@ def _schema_error(exc: Exception) -> HTTPException:
             status_code=status.HTTP_502_BAD_GATEWAY, detail="Schema refresh failed."
         )
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Schema operation failed.")
+
+
+def _query_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, (QueryJobNotFoundError, QueryResultNotFoundError)):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    if isinstance(exc, ConnectionNotFoundError):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    if isinstance(exc, VaultLockedError):
+        return HTTPException(status_code=status.HTTP_423_LOCKED, detail="Vault is locked.")
+    if isinstance(exc, (ConnectionValidationError, QueryValidationError)):
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Query operation failed.")
 
 
 @router.get("/healthz", response_model=HealthResponse)
@@ -406,3 +480,55 @@ def refresh_connection_schema(request: Request, connection_id: str) -> SchemaRes
     except Exception as exc:
         raise _schema_error(exc) from exc
     return SchemaResponse(status="ready", snapshot=_schema_response(snapshot))
+
+
+@router.post("/api/query/jobs", response_model=QueryJobResponse)
+def submit_query(request: Request, body: QuerySubmitRequest) -> QueryJobResponse:
+    _require_auth(request)
+    try:
+        job = _query_service(request).submit(
+            QuerySubmit(
+                connection_id=body.connection_id,
+                pane_id=body.pane_id,
+                sql=body.sql,
+                page_size=body.page_size,
+                row_limit=body.row_limit,
+            )
+        )
+    except Exception as exc:
+        raise _query_error(exc) from exc
+    return _query_job_response(job)
+
+
+@router.get("/api/query/jobs/{job_id}", response_model=QueryJobResponse)
+def get_query_job(request: Request, job_id: str) -> QueryJobResponse:
+    _require_auth(request)
+    try:
+        job = _query_service(request).get(job_id)
+    except Exception as exc:
+        raise _query_error(exc) from exc
+    return _query_job_response(job)
+
+
+@router.post("/api/query/jobs/{job_id}/cancel", response_model=QueryJobResponse)
+def cancel_query_job(request: Request, job_id: str) -> QueryJobResponse:
+    _require_auth(request)
+    try:
+        job = _query_service(request).cancel(job_id)
+    except Exception as exc:
+        raise _query_error(exc) from exc
+    return _query_job_response(job)
+
+
+@router.get("/api/query/jobs/{job_id}/pages/{page_index}", response_model=QueryResultPageResponse)
+def get_query_result_page(
+    request: Request,
+    job_id: str,
+    page_index: int,
+) -> QueryResultPageResponse:
+    _require_auth(request)
+    try:
+        page = _query_service(request).page(job_id, page_index)
+    except Exception as exc:
+        raise _query_error(exc) from exc
+    return _query_page_response(page)

@@ -20,4 +20,4 @@ Useful settings:
 - `TABLEPRO_AUTH_SESSION_IDLE_TIMEOUT_SECONDS`: local browser session idle timeout. Defaults to `1800`.
 - `TABLEPRO_AUTH_SESSION_COOKIE_SECURE`: set to `true` for HTTPS deployments. Defaults to `false` for localhost development.
 
-The backend supports one-time local setup, passphrase login/unlock, HTTP-only cookie sessions, and encrypted internal secret references. It does not yet implement saved database connections, query execution, WebSockets, frontend serving, or Docker packaging.
+The backend supports one-time local setup, passphrase login/unlock, HTTP-only cookie sessions, encrypted internal secret references, saved database connections, schema introspection, and backend-owned query execution. It does not yet implement WebSockets, frontend serving, query history/bookmarks, inline edits, CSV import/export, AI drafting, or Docker packaging.

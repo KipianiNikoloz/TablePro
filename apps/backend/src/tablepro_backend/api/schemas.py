@@ -157,3 +157,51 @@ class SchemaResponse(BaseModel):
     status: str
     snapshot: SchemaSnapshotResponse | None = None
     message: str | None = None
+
+
+class QuerySubmitRequest(BaseModel):
+    connection_id: str = Field(min_length=1)
+    pane_id: str = Field(min_length=1, max_length=160)
+    sql: str = Field(min_length=1)
+    page_size: int | None = Field(default=None, ge=1)
+    row_limit: int | None = Field(default=None, ge=1)
+
+
+class QueryErrorResponse(BaseModel):
+    code: str
+    message: str
+    category: str
+
+
+class QueryJobResponse(BaseModel):
+    id: str
+    connection_id: str
+    pane_id: str
+    status: str
+    submitted_at: str
+    started_at: str | None = None
+    completed_at: str | None = None
+    duration_ms: int | None = None
+    row_count: int | None = None
+    rows_affected: int | None = None
+    has_result: bool
+    page_size: int | None = None
+    total_rows: int | None = None
+    limit_reached: bool
+    transaction_state: str
+    error: QueryErrorResponse | None = None
+
+
+class QueryColumnResponse(BaseModel):
+    name: str
+    data_type: str | None = None
+
+
+class QueryResultPageResponse(BaseModel):
+    job_id: str
+    page_index: int
+    page_size: int
+    total_rows: int
+    columns: list[QueryColumnResponse]
+    rows: list[list[object]]
+    limit_reached: bool
