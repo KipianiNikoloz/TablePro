@@ -118,7 +118,9 @@ class QueryService:
             if job_id in self._cancel_requested:
                 self._complete_cancelled(job_id, started_at)
                 return
-            self._jobs[job_id] = replace(self._jobs[job_id], status="running", started_at=started_at)
+            self._jobs[job_id] = replace(
+                self._jobs[job_id], status="running", started_at=started_at
+            )
         try:
             session = self._session_for(connection, request.pane_id)
             with self._lock:

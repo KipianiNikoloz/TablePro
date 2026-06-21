@@ -162,11 +162,17 @@ def test_query_service_rejects_locked_vault(local_tmp_path: Path) -> None:
 def test_query_service_reuses_sessions_per_pane(local_tmp_path: Path) -> None:
     service, _, connection_id, adapter = _services(local_tmp_path)
 
-    first = service.submit(QuerySubmit(connection_id=connection_id, pane_id="pane-a", sql="select 1"))
+    first = service.submit(
+        QuerySubmit(connection_id=connection_id, pane_id="pane-a", sql="select 1")
+    )
     _wait_for(service, first.id, "succeeded")
-    second = service.submit(QuerySubmit(connection_id=connection_id, pane_id="pane-a", sql="select 2"))
+    second = service.submit(
+        QuerySubmit(connection_id=connection_id, pane_id="pane-a", sql="select 2")
+    )
     _wait_for(service, second.id, "succeeded")
-    third = service.submit(QuerySubmit(connection_id=connection_id, pane_id="pane-b", sql="select 3"))
+    third = service.submit(
+        QuerySubmit(connection_id=connection_id, pane_id="pane-b", sql="select 3")
+    )
     _wait_for(service, third.id, "succeeded")
 
     assert len(adapter.opened) == 2
@@ -177,7 +183,9 @@ def test_query_service_reuses_sessions_per_pane(local_tmp_path: Path) -> None:
 def test_query_service_cancels_running_job(local_tmp_path: Path) -> None:
     service, _, connection_id, adapter = _services(local_tmp_path, FakeQueryAdapter(slow=True))
 
-    job = service.submit(QuerySubmit(connection_id=connection_id, pane_id="pane-a", sql="select slow"))
+    job = service.submit(
+        QuerySubmit(connection_id=connection_id, pane_id="pane-a", sql="select slow")
+    )
     _wait_for(service, job.id, "running")
     service.cancel(job.id)
     _wait_for(service, job.id, "cancelled")

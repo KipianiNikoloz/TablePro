@@ -55,9 +55,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         vault_service,
         DriverSchemaIntrospector(),
     )
-    app.state.result_store = InMemoryResultStore(
-        max_rows=app_settings.query_result_store_max_rows
-    )
+    app.state.result_store = InMemoryResultStore(max_rows=app_settings.query_result_store_max_rows)
     app.state.query_service = QueryService(
         connection_repository,
         vault_service,
